@@ -1,0 +1,40 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.29.8-standalone/ingress.json
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-ingress
+  labels:
+    app: argocd-server
+  namespace: argocd
+  annotations:
+    # Use nginx as the ingress controller
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    # nginx.ingress.kubernetes.io/ssl-passthrough: "false"
+    # nginx.ingress.kubernetes.io/use-regex: "false"
+    # nginx.ingress.kubernetes.io/proxy_connect_timeout: "300"
+    # nginx.ingress.kubernetes.io/proxy_send_timeout: "300"
+    # nginx.ingress.kubernetes.io/proxy_read_timeout: "300"
+    # nginx.ingress.kubernetes.io/send_timeout: "300"
+    # nginx.ingress.kubernetes.io/keepalive_timeout: "300"
+    # nginx.ingress.kubernetes.io/proxy_request_buffering: "off"
+    # nginx.ingress.kubernetes.io/proxy_buffering: "off"
+    # nginx.ingress.kubernetes.io/client_body_timeouit: "300s"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: argocd.ingress.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: argo-cd-argocd-server
+            port:
+              number: 80
+  tls:
+  - secretName: argocd-ingress-local
+    hosts:
+    - argocd.ingress.local

@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.28.0-standalone/ingress.json
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: registry-ingress
+  labels:
+    app: container-registry
+  namespace: container-registry
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "0" # prevent 413 when push image
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/ssl-passthrough: "false"
+    # nginx.ingress.kubernetes.io/use-regex: "false"
+    # nginx.ingress.kubernetes.io/proxy_connect_timeout: "300"
+    # nginx.ingress.kubernetes.io/proxy_send_timeout: "300"
+    # nginx.ingress.kubernetes.io/proxy_read_timeout: "300"
+    # nginx.ingress.kubernetes.io/send_timeout: "300"
+    # nginx.ingress.kubernetes.io/keepalive_timeout: "300"
+    # nginx.ingress.kubernetes.io/proxy_request_buffering: "off"
+    # nginx.ingress.kubernetes.io/proxy_buffering: "off"
+    # nginx.ingress.kubernetes.io/client_body_timeouit: "300s"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: registry.ingress.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: registry
+            port:
+              number: 5000
+  tls:
+  - secretName: registry-ingress-local
+    hosts:
+    - registry.ingress.local
