@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-#kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
-#->  W9JpwNTjxtAiC0pa
 
 # https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/
 rm -rf cert
 mkdir -p cert
 cd cert || exit
+
+echo "is cfssl installed?"
+command -v cfssl || brew install cfssl
 
 # Create a certificate signing request. add subdomains below
 # output server-key.perm, server.csr
@@ -88,7 +89,9 @@ kubectl get csr ingress.local -o json |
   jq ".status.certificate = \"${certificate}\"" |
   kubectl replace --raw /apis/certificates.k8s.io/v1/certificatesigningrequests/ingress.local/status -f -
 
-# Download the certificate and use it. Now, as the requesting user, you can download the issued certificate and save it to a server.crt file by running the following:
+# Download the certificate and use it.
+# Now, as the requesting user, you can download the issued certificate
+# and save it to a server.crt file by running the following:
 kubectl get csr ingress.local -o jsonpath='{.status.certificate}' | base64 --decode >server.crt
 
 # Now you can populate server.crt and server-key.pem in a Secret that you could later mount into a Pod (for example, to use with a webserver that serves HTTPS).
@@ -118,10 +121,16 @@ sudo cp server.crt /etc/docker/certs.d/registry.gitlab.ingress.local/ca.crt
 #
 # for local git push to gitlab with self-cert, run
 # git config http.sslCAInfo $(pwd)/ca.pem
-#
-#
+
+helm repo add gitlab https://charts.gitlab.io
 helm upgrade --install -n gitlab-system gitlab gitlab/gitlab \
   --set global.hosts.domain=ingress.local --set certmanager.install=false \
   --set global.ingress.configureCertmanager=false \
   --set gitlab-runner.install=false \
   --set global.ingress.tls.secretName=gitlab-ingress-local
+helm upgrade --install -n gitlab-system -f gitlab-runner/values.yaml gitlab-runner
+
+helm repo add argo https://argoproj.github.io/argo-helm
+helm upgrade --install -n argocd argo-cd argo/argo-cd
+
+#kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
