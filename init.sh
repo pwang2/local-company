@@ -33,13 +33,15 @@ EOF
 echo "Don't forget add those hosts in your /etc/hosts file"
 
 # Generate a CSR manifest (in YAML), and send it to the API server
+CSR=$(base64 -w 0 server.csr)
+
 cat <<EOF | kubectl apply -f -
 apiVersion: certificates.k8s.io/v1
 kind: CertificateSigningRequest
 metadata:
   name: ingress.local
 spec:
-  request: $(base64 server.csr | tr -d '\n')
+  request: ${CSR}
   signerName: ingress.local/serving
   usages:
   - digital signature
@@ -100,6 +102,11 @@ kubectl delete secret --ignore-not-found=true -n container-registry registry-ing
 kubectl delete secret --ignore-not-found=true -n gitlab-system gitlab-ingress-local
 kubectl delete secret --ignore-not-found=true -n demo demo-ingress-local
 
+kubectl create namespace argocd || true
+kubectl create namespace container-registry || true
+kubectl create namespace gitlab-system || true
+kubectl create namespace demo || true
+
 kubectl create secret tls -n argocd argocd-ingress-local --cert server.crt --key server-key.pem
 kubectl create secret tls -n container-registry registry-ingress-local --cert server.crt --key server-key.pem
 kubectl create secret tls -n gitlab-system gitlab-ingress-local --cert server.crt --key server-key.pem
@@ -124,7 +131,7 @@ sudo cp server.crt /etc/docker/certs.d/registry.gitlab.ingress.local/ca.crt
 
 helm repo add gitlab https://charts.gitlab.io
 helm upgrade --install -n gitlab-system gitlab gitlab/gitlab \
-  --set global.hosts.domain=ingress.local --set certmanager.install=false \
+  --set global.hosts.domain=ingress.local --set installCertmanager=false \
   --set global.ingress.configureCertmanager=false \
   --set gitlab-runner.install=false \
   --set global.ingress.tls.secretName=gitlab-ingress-local
@@ -134,3 +141,6 @@ helm repo add argo https://argoproj.github.io/argo-helm
 helm upgrade --install -n argocd argo-cd argo/argo-cd
 
 #kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+
+#use to get the root password for gitlab
+#kubectl get secret gitlab-gitlab-initial-root-password -ojsonpath='{.data.password}' -n gitlab-system | base64 -d ; echo

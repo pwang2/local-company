@@ -8,7 +8,7 @@ metadata:
   namespace: argocd
   annotations:
     # Use nginx as the ingress controller
-    kubernetes.io/ingress.class: "nginx"
+    kubernetes.io/ingress.class: "gitlab-nginx"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     # nginx.ingress.kubernetes.io/ssl-passthrough: "false"
@@ -22,7 +22,7 @@ metadata:
     # nginx.ingress.kubernetes.io/proxy_buffering: "off"
     # nginx.ingress.kubernetes.io/client_body_timeouit: "300s"
 spec:
-  ingressClassName: nginx
+  ingressClassName: gitlab-nginx
   rules:
   - host: argocd.ingress.local
     http:
