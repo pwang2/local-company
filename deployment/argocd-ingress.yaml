@@ -9,6 +9,7 @@ metadata:
   annotations:
     # Use nginx as the ingress controller
     kubernetes.io/ingress.class: "gitlab-nginx"
+    kubernetes.io/ingress.provider: nginx
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     # nginx.ingress.kubernetes.io/ssl-passthrough: "false"

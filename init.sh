@@ -107,7 +107,7 @@ kubectl create namespace container-registry || true
 kubectl create namespace gitlab-system || true
 kubectl create namespace demo || true
 
-kubectl create secret tls -n argocd argocd-ingress-local --cert server.crt --key server-key.pem
+kubectl create secret tls -n gitlab-system argocd-server-tls --cert server.crt --key server-key.pem
 kubectl create secret tls -n container-registry registry-ingress-local --cert server.crt --key server-key.pem
 kubectl create secret tls -n gitlab-system gitlab-ingress-local --cert server.crt --key server-key.pem
 kubectl create secret tls -n demo demo-ingress-local --cert server.crt --key server-key.pem
@@ -138,9 +138,12 @@ helm upgrade --install -n gitlab-system gitlab gitlab/gitlab \
 helm upgrade --install -n gitlab-system -f gitlab-runner/values.yaml gitlab-runner
 
 helm repo add argo https://argoproj.github.io/argo-helm
-helm upgrade --install -n argocd argo-cd argo/argo-cd
+helm upgrade --install -n gitlab-system argo-cd argo/argo-cd \
+  --set server.ingress.enabled=true \
+  --set server.ingress.ingressClassName=gitlab-nginx \
+  --set server.ingress.hostname=argocd.ingress.local \
+  --set server.ingress.tls=true
 
 #kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 
-#use to get the root password for gitlab
 #kubectl get secret gitlab-gitlab-initial-root-password -ojsonpath='{.data.password}' -n gitlab-system | base64 -d ; echo
